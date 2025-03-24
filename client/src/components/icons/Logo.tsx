@@ -5,23 +5,26 @@ interface LogoProps {
 
 const Logo = ({ size = 'md', color = 'dark' }: LogoProps) => {
   const sizeClasses = {
-    sm: 'w-8 h-8 text-lg',
-    md: 'w-10 h-10 text-xl',
-    lg: 'w-12 h-12 text-2xl',
+    sm: 'h-8',
+    md: 'h-10',
+    lg: 'h-12',
   };
 
-  const bgColor = color === 'dark' ? 'bg-primary' : 'bg-white';
-  const textColor = color === 'dark' ? 'text-white' : 'text-primary';
-  const logoTextColor = color === 'dark' ? 'text-primary' : 'text-white';
+  // Choose the appropriate logo based on the color mode
+  const logoSrc = color === 'dark' 
+    ? '/attached_assets/Aprameya Logo-Black.png'
+    : '/attached_assets/Aprameya Logo-White.png';
+  
+  // For tech mode (could be used in special sections)
+  const techLogoSrc = '/attached_assets/Aprameya Logo-tech.png';
 
   return (
     <div className="flex items-center space-x-2">
-      <div className={`${sizeClasses[size]} rounded-full ${bgColor} flex items-center justify-center`}>
-        <span className={`font-space font-bold ${textColor}`}>A</span>
-      </div>
-      <span className={`font-space font-bold ${size === 'lg' ? 'text-2xl' : 'text-xl'} ${logoTextColor}`}>
-        Aprameya
-      </span>
+      <img 
+        src={logoSrc} 
+        alt="Aprameya Logo" 
+        className={`${sizeClasses[size]} object-contain`} 
+      />
     </div>
   );
 };
