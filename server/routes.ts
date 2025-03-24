@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, UserRole } from "@shared/schema";
 import { z } from "zod";
+import 'express-session';
 
 // Middleware to check if user is admin
 const isAdmin = async (req: Request, res: Response, next: Function) => {
@@ -82,9 +83,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // User logout
   app.post("/api/logout", (req, res) => {
-    req.session.destroy(() => {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ error: "Failed to logout" });
+        }
+        res.json({ success: true });
+      });
+    } else {
       res.json({ success: true });
-    });
+    }
   });
   
   // Get current user

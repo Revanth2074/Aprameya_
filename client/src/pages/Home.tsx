@@ -11,22 +11,18 @@ const Home = () => {
         <div className="container mx-auto relative z-10">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="text-white">
-              <h1 className="font-space font-bold text-3xl md:text-5xl leading-tight mb-4">
+              <h1 className="font-bold text-3xl md:text-5xl leading-tight mb-4">
                 Pioneering Autonomous Vehicle Innovation
               </h1>
               <p className="text-lg md:text-xl opacity-90 mb-8">
                 Exploring the Future of Self-Driving Technology
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/projects">
-                  <a className="px-6 py-3 bg-white text-primary font-medium rounded-full hover:shadow-lg transition-all btn-glow">
-                    Explore Projects
-                  </a>
+                <Link href="/projects" className="px-6 py-3 bg-white text-primary font-medium rounded-full hover:shadow-lg transition-all btn-glow">
+                  Explore Projects
                 </Link>
-                <Link href="/signup">
-                  <a className="px-6 py-3 bg-transparent border-2 border-white text-white font-medium rounded-full hover:bg-white/10 transition-all">
-                    Join Us
-                  </a>
+                <Link href="/signup" className="px-6 py-3 bg-transparent border-2 border-white text-white font-medium rounded-full hover:bg-white/10 transition-all">
+                  Join Us
                 </Link>
               </div>
             </div>
@@ -42,15 +38,15 @@ const Home = () => {
       </div>
 
       {/* Featured Section */}
-      <div className="py-16 px-4 bg-white">
+      <div className="py-16 px-4 bg-white dark:bg-slate-900">
         <div className="container mx-auto">
-          <h2 className="font-space font-bold text-2xl md:text-3xl text-center mb-12">
+          <h2 className="font-bold text-2xl md:text-3xl text-center mb-12">
             <span className="gradient-text">Driving Innovation Forward</span>
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             {featuredItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+              <div key={item.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden card-hover">
                 <div className="h-48 bg-muted overflow-hidden">
                   <img 
                     src={item.image} 
@@ -63,17 +59,15 @@ const Home = () => {
                     <div className="w-3 h-3 rounded-full bg-accent animate-pulse-slow mr-2"></div>
                     <span className="text-xs font-medium uppercase tracking-wider text-secondary">{item.category}</span>
                   </div>
-                  <h3 className="font-space font-bold text-xl mb-2">{item.title}</h3>
-                  <p className="text-foreground/70 mb-4">
+                  <h3 className="font-bold text-xl mb-2 dark:text-white">{item.title}</h3>
+                  <p className="text-foreground/70 dark:text-white/70 mb-4">
                     {item.description}
                   </p>
-                  <Link href={item.link}>
-                    <a className="inline-flex items-center text-primary font-medium hover:text-secondary transition-colors">
-                      Learn more
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                      </svg>
-                    </a>
+                  <Link href={item.link} className="inline-flex items-center text-primary font-medium hover:text-secondary transition-colors">
+                    Learn more
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
                   </Link>
                 </div>
               </div>
