@@ -26,14 +26,14 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   
   // Fetch users - only admins can see this page
-  const { data: userData, isLoading: userLoading } = useQuery({
+  const { data: userData, isLoading: userLoading } = useQuery<{id: number, username: string, role: string}>({
     queryKey: ['/api/users/me'],
     retry: false,
   });
 
   // Redirect if not admin
   useEffect(() => {
-    if (!userLoading && (!userData || userData.role !== 'admin')) {
+    if (!userLoading && (!userData || userData?.role !== 'admin')) {
       window.location.href = '/';
       toast({
         title: "Access Denied",
@@ -95,7 +95,7 @@ const ProjectsManager = () => {
   const [currentProject, setCurrentProject] = useState<Partial<Project> | null>(null);
   const { toast } = useToast();
   
-  const { data: projects, isLoading } = useQuery({
+  const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ['/api/projects'],
     retry: false,
   });
@@ -362,7 +362,7 @@ const BlogsManager = () => {
   const [currentBlog, setCurrentBlog] = useState<Partial<BlogPost> | null>(null);
   const { toast } = useToast();
   
-  const { data: blogs, isLoading } = useQuery({
+  const { data: blogs, isLoading } = useQuery<BlogPost[]>({
     queryKey: ['/api/blogs'],
     retry: false,
   });
@@ -638,7 +638,7 @@ const ResearchManager = () => {
   const [currentResearch, setCurrentResearch] = useState<Partial<ResearchItem> | null>(null);
   const { toast } = useToast();
   
-  const { data: researchItems, isLoading } = useQuery({
+  const { data: researchItems, isLoading } = useQuery<ResearchItem[]>({
     queryKey: ['/api/research'],
     retry: false,
   });
@@ -925,7 +925,7 @@ const EventsManager = () => {
   const [currentEvent, setCurrentEvent] = useState<Partial<Event> | null>(null);
   const { toast } = useToast();
   
-  const { data: events, isLoading } = useQuery({
+  const { data: events, isLoading } = useQuery<Event[]>({
     queryKey: ['/api/events'],
     retry: false,
   });
@@ -1231,7 +1231,7 @@ const EventsManager = () => {
 const UsersManager = () => {
   const { toast } = useToast();
   
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading } = useQuery<{ id: number, username: string, role: string }[]>({
     queryKey: ['/api/users'],
     retry: false,
   });
