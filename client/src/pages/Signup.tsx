@@ -15,29 +15,39 @@ const Signup = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { id, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
     setFormData(prev => ({
       ...prev,
       [id]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
-      return;
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.name,
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Failed to sign up');
+        return;
+      }
+
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to sign up');
     }
-    
-    if (!formData.agreeToTerms) {
-      alert("You must agree to the Terms of Service and Privacy Policy");
-      return;
-    }
-    
-    // Sign up logic would go here in a real implementation
-    // All new signups are automatically assigned the Aspirant role
-    console.log('Sign up attempt with:', { ...formData, role: 'aspirant' });
   };
 
   return (
@@ -52,7 +62,7 @@ const Signup = () => {
               <h1 className="font-bold text-2xl mt-4 mb-2">Join Aprameya</h1>
               <p className="text-foreground/60">Become part of our innovative community</p>
             </div>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="name" className="block text-foreground/70 font-medium mb-2">Full Name</label>
@@ -129,7 +139,7 @@ const Signup = () => {
                 Sign Up
               </button>
             </form>
-            
+
             <div className="mt-6 text-center">
               <p className="text-foreground/60">
                 Already a member? <Link href="/login" className="text-primary hover:underline">Login</Link>

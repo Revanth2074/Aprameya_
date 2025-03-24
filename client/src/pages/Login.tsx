@@ -17,10 +17,31 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Login logic would go here in a real implementation
-    console.log('Login attempt with:', formData);
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.email,
+          password: formData.password
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Failed to login');
+        return;
+      }
+
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to login');
+    }
   };
 
   return (
