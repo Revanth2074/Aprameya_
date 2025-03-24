@@ -33,7 +33,7 @@ const Projects = () => {
       </div>
 
       {/* Projects Gallery */}
-      <div className="py-16 px-4 bg-white">
+      <div className="py-16 px-4 bg-white dark:bg-slate-900">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
@@ -47,14 +47,12 @@ const Projects = () => {
 
           {/* Call to Action */}
           <div className="mt-16 text-center">
-            <h3 className="font-space font-bold text-2xl mb-4">Want to join us?</h3>
-            <p className="text-foreground/70 mb-6 max-w-2xl mx-auto">
+            <h3 className="font-bold text-2xl mb-4 dark:text-white">Want to join us?</h3>
+            <p className="text-foreground/70 dark:text-white/70 mb-6 max-w-2xl mx-auto">
               Be part of our innovative team working on cutting-edge autonomous technologies
             </p>
-            <Link href="/signup">
-              <a className="inline-block px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all btn-glow">
-                Sign Up Now
-              </a>
+            <Link href="/signup" className="inline-block px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all btn-glow">
+              Sign Up Now
             </Link>
           </div>
         </div>

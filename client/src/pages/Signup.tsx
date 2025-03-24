@@ -6,7 +6,7 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'aspirant',
+    role: 'aspirant', // Default role is aspirant and cannot be changed
     password: '',
     confirmPassword: '',
     agreeToTerms: false
@@ -36,7 +36,8 @@ const Signup = () => {
     }
     
     // Sign up logic would go here in a real implementation
-    console.log('Sign up attempt with:', formData);
+    // All new signups are automatically assigned the Aspirant role
+    console.log('Sign up attempt with:', { ...formData, role: 'aspirant' });
   };
 
   return (

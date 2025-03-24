@@ -8,8 +8,8 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ project, onViewDetails }: ProjectCardProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden card-hover h-full">
-      <div className="h-52 bg-muted overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden card-hover h-full">
+      <div className="h-52 bg-muted dark:bg-slate-700 overflow-hidden">
         <img 
           src={project.image} 
           alt={project.title} 
@@ -20,8 +20,8 @@ const ProjectCard = ({ project, onViewDetails }: ProjectCardProps) => {
         <span className="inline-block px-3 py-1 text-xs rounded-full bg-secondary/10 text-secondary font-medium mb-3">
           {project.category}
         </span>
-        <h3 className="font-space font-bold text-xl mb-2">{project.title}</h3>
-        <p className="text-foreground/70 mb-4">
+        <h3 className="font-bold text-xl mb-2 dark:text-white">{project.title}</h3>
+        <p className="text-foreground/70 dark:text-white/70 mb-4">
           {project.description.length > 120 
             ? `${project.description.substring(0, 120)}...` 
             : project.description}

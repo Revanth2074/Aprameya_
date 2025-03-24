@@ -13,9 +13,22 @@ const Navbar = () => {
       setScrolled(window.scrollY > 10);
     };
     
-    // Check system preference for dark mode
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(prefersDark ? 'dark' : 'light');
+    // Check for saved theme preference or use system preference
+    const savedTheme = localStorage.getItem('aprameya-theme');
+    let currentTheme: 'light' | 'dark';
+    
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+      currentTheme = savedTheme;
+    } else {
+      // Check system preference for dark mode
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      currentTheme = prefersDark ? 'dark' : 'light';
+    }
+    
+    setTheme(currentTheme);
+    
+    // Apply the theme
+    document.documentElement.classList.toggle('dark', currentTheme === 'dark');
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -30,9 +43,14 @@ const Navbar = () => {
   };
   
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    
+    // Save theme preference
+    localStorage.setItem('aprameya-theme', newTheme);
+    
     // Apply theme to document
-    document.documentElement.classList.toggle('dark', theme === 'light');
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
   const isActive = (path: string) => {
