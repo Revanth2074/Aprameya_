@@ -7,9 +7,9 @@ interface LogoProps {
 
 const Logo = ({ size = 'md', color = 'dark' }: LogoProps) => {
   const sizeClasses = {
-    sm: 'h-8',
-    md: 'h-10',
-    lg: 'h-12',
+    sm: 'h-10',
+    md: 'h-12',
+    lg: 'h-16',
   };
 
   // Always use black logo for the site in light mode

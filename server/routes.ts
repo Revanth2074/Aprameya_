@@ -121,6 +121,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin route: Get all users
+  // Get current user role
+  app.get("/api/user/role", async (req, res) => {
+    const userId = req.session?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json({ role: user.role });
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      res.status(500).json({ error: "Failed to fetch user role" });
+    }
+  });
+
+  // Core team can view all aspirants
+  app.get("/api/aspirants", async (req, res) => {
+    const userId = req.session?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== UserRole.CORE_TEAM && user.role !== UserRole.ADMIN)) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const aspirants = await storage.getUsersByRole(UserRole.ASPIRANT);
+      const aspirantsWithoutPasswords = aspirants.map(({ password, ...rest }) => rest);
+      res.json(aspirantsWithoutPasswords);
+    } catch (error) {
+      console.error("Error fetching aspirants:", error);
+      res.status(500).json({ error: "Failed to fetch aspirants" });
+    }
+  });
+
   app.get("/api/users", isAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
