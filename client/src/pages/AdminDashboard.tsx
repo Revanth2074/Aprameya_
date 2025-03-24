@@ -1299,7 +1299,7 @@ const UsersManager = () => {
               </thead>
               <tbody>
                 {users && users.length > 0 ? (
-                  users.map((user: any) => (
+                  users.map((user) => (
                     <tr key={user.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">{user.id}</td>
                       <td className="py-3 px-4">{user.username}</td>
