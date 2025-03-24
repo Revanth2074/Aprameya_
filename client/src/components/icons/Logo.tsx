@@ -43,11 +43,11 @@ const Logo = ({ size = 'md', color = 'auto' }: LogoProps) => {
 
   // Choose the appropriate logo based on the color mode
   const logoSrc = currentColor === 'dark' 
-    ? '/attached_assets/Aprameya Logo-Black.png'
-    : '/attached_assets/Aprameya Logo-White.png';
+    ? '/Aprameya Logo-Black.png'
+    : '/Aprameya Logo-White.png';
   
   // For tech mode (could be used in special sections)
-  const techLogoSrc = '/attached_assets/Aprameya Logo-tech.png';
+  const techLogoSrc = '/Aprameya Logo-tech.png';
 
   return (
     <div className="flex items-center space-x-2">
