@@ -26,7 +26,7 @@ const Research = () => {
 
           {/* Footer Note */}
           <div className="mt-12 text-center">
-            <p className="text-foreground/70 italic">Research conducted by AprameyaKLU members</p>
+            <p className="text-foreground/70 italic">Research conducted by Aprameya members</p>
             <p className="mt-2 text-sm text-foreground/60">
               For research collaboration inquiries, please contact{' '}
               <a href="mailto:research@aprameyaklu.com" className="text-primary hover:underline">

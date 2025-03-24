@@ -10,7 +10,7 @@ const About = () => {
       <div className="diagonal-bg py-20 px-4 relative">
         <div className="container mx-auto relative z-10">
           <h1 className="font-space font-bold text-3xl md:text-5xl text-white text-center mb-4">
-            About AprameyaKLU
+            About Aprameya
           </h1>
           <p className="text-lg text-white/80 text-center max-w-3xl mx-auto">
             Learn about our journey, mission, and the team driving innovation in autonomous technology

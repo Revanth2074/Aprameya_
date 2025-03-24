@@ -50,7 +50,7 @@ const Signup = () => {
                   <Logo size="lg" />
                 </a>
               </Link>
-              <h1 className="font-space font-bold text-2xl mt-4 mb-2">Join AprameyaKLU</h1>
+              <h1 className="font-space font-bold text-2xl mt-4 mb-2">Join Aprameya</h1>
               <p className="text-foreground/60">Become part of our innovative community</p>
             </div>
             

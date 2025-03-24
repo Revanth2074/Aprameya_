@@ -71,7 +71,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li className="flex items-start">
                 <FaEnvelope className="mt-1 mr-3 text-white/70" />
-                <span className="text-white/70">contact@aprameyaklu.com</span>
+                <span className="text-white/70">contact@aprameya.com</span>
               </li>
               <li className="flex items-start">
                 <FaMapMarkerAlt className="mt-1 mr-3 text-white/70" />
@@ -99,7 +99,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-white/10 mt-8 pt-8 text-center">
-          <p className="text-white/70">© 2025 AprameyaKLU. All rights reserved.</p>
+          <p className="text-white/70">© 2025 Aprameya. All rights reserved.</p>
         </div>
       </div>
     </footer>

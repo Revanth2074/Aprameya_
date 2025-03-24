@@ -20,7 +20,7 @@ const Logo = ({ size = 'md', color = 'dark' }: LogoProps) => {
         <span className={`font-space font-bold ${textColor}`}>A</span>
       </div>
       <span className={`font-space font-bold ${size === 'lg' ? 'text-2xl' : 'text-xl'} ${logoTextColor}`}>
-        AprameyaKLU
+        Aprameya
       </span>
     </div>
   );

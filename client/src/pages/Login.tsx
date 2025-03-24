@@ -35,7 +35,7 @@ const Login = () => {
                 </a>
               </Link>
               <h1 className="font-space font-bold text-2xl mt-4 mb-2">Login to Your Account</h1>
-              <p className="text-foreground/60">Access your AprameyaKLU dashboard</p>
+              <p className="text-foreground/60">Access your Aprameya dashboard</p>
             </div>
             
             <form onSubmit={handleSubmit}>
