@@ -29,12 +29,10 @@ const Login = () => {
         <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
           <div className="p-8">
             <div className="text-center mb-8">
-              <Link href="/">
-                <a className="inline-flex items-center justify-center">
-                  <Logo size="lg" />
-                </a>
+              <Link href="/" className="inline-flex items-center justify-center">
+                <Logo size="lg" />
               </Link>
-              <h1 className="font-space font-bold text-2xl mt-4 mb-2">Login to Your Account</h1>
+              <h1 className="font-bold text-2xl mt-4 mb-2">Login to Your Account</h1>
               <p className="text-foreground/60">Access your Aprameya dashboard</p>
             </div>
             
@@ -86,7 +84,7 @@ const Login = () => {
             
             <div className="mt-6 text-center">
               <p className="text-foreground/60">
-                New here? <Link href="/signup"><a className="text-primary hover:underline">Sign up!</a></Link>
+                New here? <Link href="/signup" className="text-primary hover:underline">Sign up!</Link>
               </p>
             </div>
           </div>

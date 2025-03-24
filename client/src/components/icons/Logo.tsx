@@ -1,53 +1,24 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
-  color?: 'light' | 'dark' | 'auto';
+  color?: 'light' | 'dark';
 }
 
-const Logo = ({ size = 'md', color = 'auto' }: LogoProps) => {
-  const [currentColor, setCurrentColor] = useState<'light' | 'dark'>(color === 'auto' ? 'dark' : color);
-  
-  useEffect(() => {
-    // If color is set to auto, update it based on dark mode
-    if (color === 'auto') {
-      // Check if dark mode is enabled
-      const isDarkMode = document.documentElement.classList.contains('dark');
-      setCurrentColor(isDarkMode ? 'light' : 'dark');
-      
-      // Add event listener for theme changes
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.attributeName === 'class') {
-            const isDark = document.documentElement.classList.contains('dark');
-            setCurrentColor(isDark ? 'light' : 'dark');
-          }
-        });
-      });
-      
-      observer.observe(document.documentElement, { attributes: true });
-      
-      return () => {
-        observer.disconnect();
-      };
-    } else {
-      setCurrentColor(color);
-    }
-  }, [color]);
-  
+const Logo = ({ size = 'md', color = 'dark' }: LogoProps) => {
   const sizeClasses = {
     sm: 'h-8',
     md: 'h-10',
     lg: 'h-12',
   };
 
-  // Choose the appropriate logo based on the color mode
-  const logoSrc = currentColor === 'dark' 
-    ? '/Aprameya Logo-Black.png'
-    : '/Aprameya Logo-White.png';
+  // Always use black logo for the site in light mode
+  const logoSrc = color === 'light' 
+    ? '/logo-white.png'  // Only use white logo in dark backgrounds like footer
+    : '/logo-black.png'; // Use black logo everywhere else
   
   // For tech mode (could be used in special sections)
-  const techLogoSrc = '/Aprameya Logo-tech.png';
+  const techLogoSrc = '/logo-tech.png';
 
   return (
     <div className="flex items-center space-x-2">
