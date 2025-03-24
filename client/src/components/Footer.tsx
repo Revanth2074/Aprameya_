@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <Logo color="light" />
+              <Logo color="light" size="md" />
             </div>
             <p className="text-white/70 mb-4">
               Pioneering autonomous vehicle innovation through student-led research and development.

@@ -66,7 +66,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <Link href="/" onClick={closeMobileMenu} className="flex items-center space-x-2">
-            <Logo color={theme === 'dark' ? 'light' : 'dark'} />
+            <Logo color="auto" />
           </Link>
           
           <div className="hidden md:flex space-x-6 items-center">
