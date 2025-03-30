@@ -160,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== UserRole.CORE_TEAM && user.role !== UserRole.ADMIN)) {
+      if (!user || (user.role !== UserRole.CORE && user.role !== UserRole.ADMIN)) {
         return res.status(403).json({ error: "Not authorized" });
       }
 
@@ -1290,7 +1290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== UserRole.CORE_TEAM && user.role !== UserRole.ADMIN)) {
+      if (!user || (user.role !== UserRole.CORE && user.role !== UserRole.ADMIN)) {
         return res.status(403).json({ error: "Only core team members and admins can send messages" });
       }
       
@@ -1319,7 +1319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== UserRole.CORE_TEAM && user.role !== UserRole.ADMIN)) {
+      if (!user || (user.role !== UserRole.CORE && user.role !== UserRole.ADMIN)) {
         return res.status(403).json({ error: "Only core team members and admins can view messages" });
       }
       
