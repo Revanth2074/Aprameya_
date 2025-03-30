@@ -4,7 +4,7 @@ import Logo from '../components/icons/Logo';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
     rememberMe: false
   });
@@ -26,7 +26,7 @@ const Login = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.email,
+          username: formData.username,
           password: formData.password
         }),
       });
@@ -59,13 +59,13 @@ const Login = () => {
             
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label htmlFor="email" className="block text-foreground/70 font-medium mb-2">Email</label>
+                <label htmlFor="username" className="block text-foreground/70 font-medium mb-2">Username</label>
                 <input 
-                  type="email" 
-                  id="email" 
+                  type="text" 
+                  id="username" 
                   className="w-full px-4 py-2 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                  placeholder="you@example.com"
-                  value={formData.email}
+                  placeholder="yourusername"
+                  value={formData.username}
                   onChange={handleInputChange}
                   required
                 />

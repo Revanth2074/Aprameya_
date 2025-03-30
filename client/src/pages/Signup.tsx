@@ -4,7 +4,7 @@ import Logo from '../components/icons/Logo';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     role: 'aspirant', // Default role is aspirant and cannot be changed
     password: '',
@@ -31,7 +31,7 @@ const Signup = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.name,
+          username: formData.username,
           email: formData.email,
           password: formData.password
         }),
@@ -65,13 +65,13 @@ const Signup = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label htmlFor="name" className="block text-foreground/70 font-medium mb-2">Full Name</label>
+                <label htmlFor="username" className="block text-foreground/70 font-medium mb-2">Username</label>
                 <input 
                   type="text" 
-                  id="name" 
+                  id="username" 
                   className="w-full px-4 py-2 rounded-lg border border-muted focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                  placeholder="Your name"
-                  value={formData.name}
+                  placeholder="Enter a username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   required
                 />

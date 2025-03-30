@@ -36,7 +36,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...insertUser,
         role: UserRole.ASPIRANT,
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
       .returning();
     return user;
