@@ -33,12 +33,16 @@ const DashboardRouter: React.FC = () => {
   }
 
   // Route to the appropriate dashboard based on user role
-  if (user.role === 'ADMIN') {
-    return <AdminDashboard />;
-  } else if (user.role === 'CORE') {
-    return <CoreTeamDashboard />;
-  } else {
-    return <AspirantDashboard />;
+  switch (user.role) {
+    case 'ADMIN':
+      return <AdminDashboard />;
+    case 'CORE':
+      return <CoreTeamDashboard />;
+    case 'ASPIRANT':
+      return <AspirantDashboard />;
+    default:
+      console.error(`Unknown user role: ${user.role}`);
+      return <AspirantDashboard />;
   }
 };
 

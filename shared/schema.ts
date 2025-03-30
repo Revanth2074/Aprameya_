@@ -5,9 +5,9 @@ import { relations } from "drizzle-orm";
 
 // Define user roles as enum for type safety
 export const UserRole = {
-  ASPIRANT: "aspirant",
-  CORE_TEAM: "core_team",
-  ADMIN: "admin",
+  ASPIRANT: "ASPIRANT",
+  CORE: "CORE",
+  ADMIN: "ADMIN",
 } as const;
 
 export type UserRoleType = typeof UserRole[keyof typeof UserRole];

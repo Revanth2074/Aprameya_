@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const user = await storage.getUser(userId);
     
-    if (!user || (user.role !== UserRole.ADMIN && user.role !== UserRole.CORE_TEAM)) {
+    if (!user || (user.role !== UserRole.ADMIN && user.role !== UserRole.CORE)) {
       return res.status(403).json({ error: "Not authorized" });
     }
     
