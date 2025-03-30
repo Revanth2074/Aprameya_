@@ -111,24 +111,9 @@ const Navbar = () => {
                     <Link href="/profile" className="cursor-pointer">Profile</Link>
                   </DropdownMenuItem>
                   
-                  {/* Admin links */}
-                  {user.role === 'ADMIN' && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin" className="cursor-pointer">Admin Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/core-team" className="cursor-pointer">Core Team Dashboard</Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  {/* Core Team links */}
-                  {user.role === 'CORE' && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/core-team" className="cursor-pointer">Core Team Dashboard</Link>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer">Dashboard</Link>
+                  </DropdownMenuItem>
                   
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
@@ -212,33 +197,12 @@ const Navbar = () => {
                   Profile
                 </Link>
                 
-                {/* Admin links */}
-                {user.role === 'ADMIN' && (
-                  <>
-                    <Link href="/admin"
-                      className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/admin')}`}
-                      onClick={closeMobileMenu}
-                    >
-                      Admin Dashboard
-                    </Link>
-                    <Link href="/core-team"
-                      className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/core-team')}`}
-                      onClick={closeMobileMenu}
-                    >
-                      Core Team Dashboard
-                    </Link>
-                  </>
-                )}
-                
-                {/* Core Team links */}
-                {user.role === 'CORE' && (
-                  <Link href="/core-team"
-                    className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/core-team')}`}
-                    onClick={closeMobileMenu}
-                  >
-                    Core Team Dashboard
-                  </Link>
-                )}
+                <Link href="/dashboard"
+                  className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/dashboard')}`}
+                  onClick={closeMobileMenu}
+                >
+                  Dashboard
+                </Link>
                 
                 <button
                   onClick={() => {

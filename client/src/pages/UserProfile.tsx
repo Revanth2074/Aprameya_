@@ -253,10 +253,69 @@ const UserProfile = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="text-sm font-medium">Username:</div>
                   <div className="text-sm">{currentUser.username}</div>
+                  <div className="text-sm font-medium">Email:</div>
+                  <div className="text-sm">{currentUser.email}</div>
                   <div className="text-sm font-medium">Role:</div>
-                  <div className="text-sm">{currentUser.role}</div>
+                  <div className="text-sm">
+                    <Badge className={`${getRoleBadgeColor(currentUser.role)}`}>
+                      {currentUser.role}
+                    </Badge>
+                  </div>
                   <div className="text-sm font-medium">Member Since:</div>
                   <div className="text-sm">{new Date(currentUser.created_at).toLocaleDateString()}</div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold">Activity Summary</h3>
+                <Separator className="my-2" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <p className="text-lg font-bold text-blue-600">{userEventRegistrations.length}</p>
+                    <p className="text-xs text-gray-500">Event Registrations</p>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg text-center">
+                    <p className="text-lg font-bold text-green-600">{userComments.length}</p>
+                    <p className="text-xs text-gray-500">Comments</p>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg text-center">
+                    <p className="text-lg font-bold text-purple-600">{
+                      new Date(currentUser.created_at).toLocaleDateString() !== 'Invalid Date' 
+                        ? Math.floor((new Date().getTime() - new Date(currentUser.created_at).getTime()) / (1000 * 3600 * 24))
+                        : 0
+                    }</p>
+                    <p className="text-xs text-gray-500">Days as Member</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold">Access & Permissions</h3>
+                <Separator className="my-2" />
+                <div className="mt-4 space-y-2">
+                  {currentUser.role === 'ADMIN' && (
+                    <div className="flex items-center space-x-2">
+                      <Badge className="bg-purple-500">Full Admin Access</Badge>
+                      <span className="text-sm text-gray-500">Can manage all content and users</span>
+                    </div>
+                  )}
+                  
+                  {(currentUser.role === 'ADMIN' || currentUser.role === 'CORE') && (
+                    <div className="flex items-center space-x-2">
+                      <Badge className="bg-blue-500">Content Management</Badge>
+                      <span className="text-sm text-gray-500">Can create and edit content</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-green-500">Event Registration</Badge>
+                    <span className="text-sm text-gray-500">Can register for events</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-amber-500">Comment Access</Badge>
+                    <span className="text-sm text-gray-500">Can comment on content</span>
+                  </div>
                 </div>
               </div>
             </div>

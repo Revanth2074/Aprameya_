@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import DashboardRouter from "./components/DashboardRouter";
 import Home from "./pages/Home";
 import Projects from "./pages/Projects";
 import Blogs from "./pages/Blogs";
@@ -11,8 +12,6 @@ import Events from "./pages/Events";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import AdminDashboard from "./pages/AdminDashboard";
-import CoreTeamDashboard from "./pages/CoreTeamDashboard";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/not-found";
 
@@ -42,7 +41,15 @@ const ProtectedRoute = ({ component: Component, roles, ...rest }: any) => {
   return <Component {...rest} />;
 };
 
+// We're now using DashboardRouter component instead of redirects
+
 function App() {
+  // Get current user for conditional rendering
+  const { data: user } = useQuery({
+    queryKey: ['/api/users/me'],
+    staleTime: 5000,
+  });
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -57,14 +64,8 @@ function App() {
           <Route path="/login" component={Login} />
           <Route path="/signup" component={Signup} />
           
-          {/* Protected routes with role requirements */}
-          <Route path="/admin">
-            <ProtectedRoute component={AdminDashboard} roles={['ADMIN']} />
-          </Route>
-          
-          <Route path="/core-team">
-            <ProtectedRoute component={CoreTeamDashboard} roles={['ADMIN', 'CORE']} />
-          </Route>
+          {/* Dashboard route - will route to the appropriate dashboard based on user role */}
+          <Route path="/dashboard" component={DashboardRouter} />
           
           <Route path="/profile">
             <ProtectedRoute component={UserProfile} roles={['ADMIN', 'CORE', 'ASPIRANT']} />
