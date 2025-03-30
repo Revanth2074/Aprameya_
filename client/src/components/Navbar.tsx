@@ -1,11 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Logo from './icons/Logo';
 
 const Navbar = () => {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Fetch current user
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['/api/users/me'],
+    staleTime: 5000,
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,6 +42,19 @@ const Navbar = () => {
 
   const isActive = (path: string) => {
     return location === path ? 'text-primary border-b-2 border-primary' : '';
+  };
+
+  const getInitials = (username: string) => {
+    return username?.substring(0, 2).toUpperCase() || 'A';
+  };
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('/api/logout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -60,9 +89,57 @@ const Navbar = () => {
               About
             </Link>
             
-            <Link href="/login" className="ml-2 px-4 py-2 rounded-full bg-primary text-white hover:bg-opacity-90 transition-all">
-              Login
-            </Link>
+            {!user ? (
+              <Link href="/login" className="ml-2 px-4 py-2 rounded-full bg-primary text-white hover:bg-opacity-90 transition-all">
+                Login
+              </Link>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="focus:outline-none">
+                  <Avatar className="h-8 w-8 cursor-pointer">
+                    <AvatarFallback className="bg-primary text-white">
+                      {getInitials(user.username)}
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="p-2 font-medium text-sm">
+                    Signed in as <span className="font-bold">{user.username}</span>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">Profile</Link>
+                  </DropdownMenuItem>
+                  
+                  {/* Admin links */}
+                  {user.role === 'ADMIN' && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer">Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/core-team" className="cursor-pointer">Core Team Dashboard</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
+                  {/* Core Team links */}
+                  {user.role === 'CORE' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/core-team" className="cursor-pointer">Core Team Dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
+                  
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="cursor-pointer text-red-500 focus:text-red-500"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           
           <div className="md:hidden flex items-center">
@@ -117,12 +194,63 @@ const Navbar = () => {
             >
               About
             </Link>
-            <Link href="/login"
-              className="py-2 px-4 rounded-full bg-primary text-white hover:bg-opacity-90 transition-all w-full text-center"
-              onClick={closeMobileMenu}
-            >
-              Login
-            </Link>
+            
+            {!user ? (
+              <Link href="/login"
+                className="py-2 px-4 rounded-full bg-primary text-white hover:bg-opacity-90 transition-all w-full text-center"
+                onClick={closeMobileMenu}
+              >
+                Login
+              </Link>
+            ) : (
+              <>
+                <hr className="border-t border-gray-200" />
+                <Link href="/profile"
+                  className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/profile')}`}
+                  onClick={closeMobileMenu}
+                >
+                  Profile
+                </Link>
+                
+                {/* Admin links */}
+                {user.role === 'ADMIN' && (
+                  <>
+                    <Link href="/admin"
+                      className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/admin')}`}
+                      onClick={closeMobileMenu}
+                    >
+                      Admin Dashboard
+                    </Link>
+                    <Link href="/core-team"
+                      className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/core-team')}`}
+                      onClick={closeMobileMenu}
+                    >
+                      Core Team Dashboard
+                    </Link>
+                  </>
+                )}
+                
+                {/* Core Team links */}
+                {user.role === 'CORE' && (
+                  <Link href="/core-team"
+                    className={`py-2 font-medium hover:text-primary transition-colors ${isActive('/core-team')}`}
+                    onClick={closeMobileMenu}
+                  >
+                    Core Team Dashboard
+                  </Link>
+                )}
+                
+                <button
+                  onClick={() => {
+                    closeMobileMenu();
+                    handleLogout();
+                  }}
+                  className="py-2 font-medium text-red-500 hover:text-red-700 transition-colors text-left"
+                >
+                  Logout
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

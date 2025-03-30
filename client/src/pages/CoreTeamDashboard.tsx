@@ -4,25 +4,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Project, BlogPost, ResearchItem, Event } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { UserRole } from '@shared/schema';
 
-const AdminDashboard = () => {
+const CoreTeamDashboard = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch users, projects, blogs, research items, and events
-  const { data: users = [] } = useQuery({
-    queryKey: ['/api/users'],
-    staleTime: 5000,
-  });
-
+  // Fetch projects, blogs, research items, and events
   const { data: projects = [] } = useQuery({
     queryKey: ['/api/projects'],
     staleTime: 5000,
@@ -52,18 +45,6 @@ const AdminDashboard = () => {
   const [newMessage, setNewMessage] = useState('');
 
   // Mutations
-  const updateUserRole = useMutation({
-    mutationFn: ({ userId, role }: { userId: number, role: string }) => 
-      apiRequest(`/api/users/${userId}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({
-        title: 'Success',
-        description: 'User role updated successfully',
-      });
-    },
-  });
-
   const createProject = useMutation({
     mutationFn: (project: Omit<Project, 'id'>) => 
       apiRequest('/api/projects', { method: 'POST', body: JSON.stringify(project) }),
@@ -89,18 +70,6 @@ const AdminDashboard = () => {
       });
       setSelectedItem(null);
       setIsEditing(false);
-    },
-  });
-
-  const deleteProject = useMutation({
-    mutationFn: (id: number) => 
-      apiRequest(`/api/projects/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      toast({
-        title: 'Success',
-        description: 'Project deleted successfully',
-      });
     },
   });
 
@@ -132,18 +101,6 @@ const AdminDashboard = () => {
     },
   });
 
-  const deleteBlog = useMutation({
-    mutationFn: (id: number) => 
-      apiRequest(`/api/blogs/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/blogs'] });
-      toast({
-        title: 'Success',
-        description: 'Blog post deleted successfully',
-      });
-    },
-  });
-
   const createResearch = useMutation({
     mutationFn: (research: Omit<ResearchItem, 'id'>) => 
       apiRequest('/api/research', { method: 'POST', body: JSON.stringify(research) }),
@@ -172,18 +129,6 @@ const AdminDashboard = () => {
     },
   });
 
-  const deleteResearch = useMutation({
-    mutationFn: (id: number) => 
-      apiRequest(`/api/research/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/research'] });
-      toast({
-        title: 'Success',
-        description: 'Research item deleted successfully',
-      });
-    },
-  });
-
   const createEvent = useMutation({
     mutationFn: (event: Omit<Event, 'id'>) => 
       apiRequest('/api/events', { method: 'POST', body: JSON.stringify(event) }),
@@ -209,18 +154,6 @@ const AdminDashboard = () => {
       });
       setSelectedItem(null);
       setIsEditing(false);
-    },
-  });
-
-  const deleteEvent = useMutation({
-    mutationFn: (id: number) => 
-      apiRequest(`/api/events/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-      toast({
-        title: 'Success',
-        description: 'Event deleted successfully',
-      });
     },
   });
 
@@ -316,24 +249,6 @@ const AdminDashboard = () => {
   const handleInputChange = (field: string, value: string | number) => {
     if (!selectedItem) return;
     setSelectedItem({ ...selectedItem, [field]: value });
-  };
-
-  const handleDelete = (id: number, type: string) => {
-    if (window.confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-      if (type === 'project') {
-        deleteProject.mutate(id);
-      } else if (type === 'blog') {
-        deleteBlog.mutate(id);
-      } else if (type === 'research') {
-        deleteResearch.mutate(id);
-      } else if (type === 'event') {
-        deleteEvent.mutate(id);
-      }
-    }
-  };
-
-  const handleChangeUserRole = (userId: number, role: string) => {
-    updateUserRole.mutate({ userId, role });
   };
 
   const renderForm = () => {
@@ -599,76 +514,19 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-6">Core Team Dashboard</h1>
       
       {isEditing ? (
         renderForm()
       ) : (
-        <Tabs defaultValue="users">
+        <Tabs defaultValue="projects">
           <TabsList className="mb-6">
-            <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="blogs">Blogs</TabsTrigger>
             <TabsTrigger value="research">Research</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="team-chat">Team Chat</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="users" className="space-y-4">
-            <div className="mb-4">
-              <h2 className="text-2xl font-semibold">User Management</h2>
-              <p className="text-gray-600">Manage user roles and permissions</p>
-            </div>
-            
-            <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-100">
-                  <tr>
-                    <th scope="col" className="px-6 py-3">ID</th>
-                    <th scope="col" className="px-6 py-3">Username</th>
-                    <th scope="col" className="px-6 py-3">Email</th>
-                    <th scope="col" className="px-6 py-3">Role</th>
-                    <th scope="col" className="px-6 py-3">Created</th>
-                    <th scope="col" className="px-6 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user: any) => (
-                    <tr key={user.id} className="bg-white border-b hover:bg-gray-50">
-                      <td className="px-6 py-4">{user.id}</td>
-                      <td className="px-6 py-4">{user.username}</td>
-                      <td className="px-6 py-4">{user.email}</td>
-                      <td className="px-6 py-4">
-                        <Select 
-                          defaultValue={user.role}
-                          onValueChange={(value) => handleChangeUserRole(user.id, value)}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="ASPIRANT">Aspirant</SelectItem>
-                            <SelectItem value="CORE">Core Team</SelectItem>
-                            <SelectItem value="ADMIN">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-6 py-4">{new Date(user.created_at).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View Details
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </TabsContent>
           
           <TabsContent value="projects" className="space-y-4">
             <div className="flex justify-between mb-4">
@@ -691,18 +549,12 @@ const AdminDashboard = () => {
                   <CardContent>
                     <p className="line-clamp-3">{project.description}</p>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
+                  <CardFooter>
                     <Button 
                       variant="outline"
                       onClick={() => handleEdit(project, 'project')}
                     >
                       Edit
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => handleDelete(Number(project.id), 'project')}
-                    >
-                      Delete
                     </Button>
                   </CardFooter>
                 </Card>
@@ -731,18 +583,12 @@ const AdminDashboard = () => {
                   <CardContent>
                     <p className="line-clamp-3">{blog.excerpt}</p>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
+                  <CardFooter>
                     <Button 
                       variant="outline"
                       onClick={() => handleEdit(blog, 'blog')}
                     >
                       Edit
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => handleDelete(Number(blog.id), 'blog')}
-                    >
-                      Delete
                     </Button>
                   </CardFooter>
                 </Card>
@@ -772,18 +618,12 @@ const AdminDashboard = () => {
                     <p className="line-clamp-3">{item.description}</p>
                     <p className="mt-2 text-sm">Citations: {item.citations}</p>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
+                  <CardFooter>
                     <Button 
                       variant="outline"
                       onClick={() => handleEdit(item, 'research')}
                     >
                       Edit
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => handleDelete(Number(item.id), 'research')}
-                    >
-                      Delete
                     </Button>
                   </CardFooter>
                 </Card>
@@ -813,18 +653,12 @@ const AdminDashboard = () => {
                     <p className="line-clamp-3">{event.description}</p>
                     <p className="mt-2 text-sm">{event.location} at {event.time}</p>
                   </CardContent>
-                  <CardFooter className="flex justify-between">
+                  <CardFooter>
                     <Button 
                       variant="outline"
                       onClick={() => handleEdit(event, 'event')}
                     >
                       Edit
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => handleDelete(Number(event.id), 'event')}
-                    >
-                      Delete
                     </Button>
                   </CardFooter>
                 </Card>
@@ -880,4 +714,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default CoreTeamDashboard;
