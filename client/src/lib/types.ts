@@ -1,4 +1,3 @@
-// Project Types
 export interface Project {
   id: string;
   title: string;
@@ -9,7 +8,6 @@ export interface Project {
   team: string[];
 }
 
-// Blog Types
 export interface BlogPost {
   id: string;
   title: string;
@@ -21,7 +19,6 @@ export interface BlogPost {
   author: string;
 }
 
-// Research Types
 export interface ResearchItem {
   id: string;
   title: string;
@@ -33,7 +30,6 @@ export interface ResearchItem {
   citations: number;
 }
 
-// Event Types
 export interface Event {
   id: string;
   title: string;
@@ -48,7 +44,6 @@ export interface Event {
   image: string;
 }
 
-// Team Member Types
 export interface TeamMember {
   id: string;
   name: string;
@@ -63,7 +58,6 @@ export interface TeamMember {
   };
 }
 
-// Stats Types
 export interface StatItem {
   value: string;
   label: string;

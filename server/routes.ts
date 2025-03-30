@@ -1,10 +1,19 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, UserRole } from "@shared/schema";
+import { 
+  insertUserSchema, 
+  insertProjectSchema,
+  insertBlogSchema,
+  insertResearchSchema,
+  insertEventSchema,
+  insertCommentSchema,
+  insertEventRegistrationSchema,
+  insertMessageSchema,
+  UserRole 
+} from "@shared/schema";
 import { z } from "zod";
 import 'express-session';
-import { projects, blogPosts, researchItems, events } from "../client/src/lib/data";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: Request, res: Response, next: Function) => {
@@ -232,59 +241,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
   
-  // API endpoints for Projects
-  // For now, we'll use in-memory storage with the imported sample data
-  let projectsData = [...projects];
+  // For backwards compatibility, we'll provide API endpoints that map to the database versions
   
-  app.get("/api/projects", (req, res) => {
-    res.json(projectsData);
-  });
-  
-  app.get("/api/projects/:id", (req, res) => {
-    const project = projectsData.find(p => p.id === req.params.id);
-    if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-    res.json(project);
-  });
-  
-  app.post("/api/projects", isAdminOrCore, (req, res) => {
+  // Projects compatibility endpoints
+  app.get("/api/projects", async (req, res) => {
     try {
-      const newProject = {
+      const projects = await storage.getAllProjects();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+  
+  app.get("/api/projects/:id", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      res.status(500).json({ error: "Failed to fetch project" });
+    }
+  });
+  
+  app.post("/api/projects", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const projectInput = insertProjectSchema.safeParse({
         ...req.body,
-        id: Math.random().toString(36).substring(2, 15)
-      };
-      projectsData.push(newProject);
-      res.status(201).json(newProject);
+        user_id: userId
+      });
+      
+      if (!projectInput.success) {
+        return res.status(400).json({ error: projectInput.error });
+      }
+      
+      const project = await storage.createProject(projectInput.data);
+      res.status(201).json(project);
     } catch (error) {
       console.error("Error creating project:", error);
       res.status(500).json({ error: "Failed to create project" });
     }
   });
   
-  app.put("/api/projects/:id", isAdminOrCore, (req, res) => {
+  app.put("/api/projects/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = projectsData.findIndex(p => p.id === req.params.id);
-      if (index === -1) {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
       
-      projectsData[index] = { ...projectsData[index], ...req.body };
-      res.json(projectsData[index]);
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (project.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this project" });
+      }
+      
+      const updatedProject = await storage.updateProject(projectId, req.body);
+      res.json(updatedProject);
     } catch (error) {
       console.error("Error updating project:", error);
       res.status(500).json({ error: "Failed to update project" });
     }
   });
   
-  app.delete("/api/projects/:id", isAdminOrCore, (req, res) => {
+  app.delete("/api/projects/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = projectsData.findIndex(p => p.id === req.params.id);
-      if (index === -1) {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
       
-      projectsData.splice(index, 1);
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (project.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this project" });
+      }
+      
+      await storage.deleteProject(projectId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting project:", error);
@@ -292,117 +344,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // API endpoints for Blogs
-  let blogsData = [...blogPosts];
-  
-  app.get("/api/blogs", (req, res) => {
-    res.json(blogsData);
-  });
-  
-  app.get("/api/blogs/:id", (req, res) => {
-    const blog = blogsData.find(b => b.id === req.params.id);
-    if (!blog) {
-      return res.status(404).json({ error: "Blog post not found" });
-    }
-    res.json(blog);
-  });
-  
-  app.post("/api/blogs", isAdminOrCore, (req, res) => {
+  // Blogs compatibility endpoints
+  app.get("/api/blogs", async (req, res) => {
     try {
-      const newBlog = {
+      const blogs = await storage.getAllBlogs();
+      res.json(blogs);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+      res.status(500).json({ error: "Failed to fetch blogs" });
+    }
+  });
+  
+  app.get("/api/blogs/:id", async (req, res) => {
+    try {
+      const blogId = parseInt(req.params.id);
+      const blog = await storage.getBlog(blogId);
+      
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+      
+      res.json(blog);
+    } catch (error) {
+      console.error("Error fetching blog:", error);
+      res.status(500).json({ error: "Failed to fetch blog" });
+    }
+  });
+  
+  app.post("/api/blogs", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const blogInput = insertBlogSchema.safeParse({
         ...req.body,
-        id: Math.random().toString(36).substring(2, 15)
-      };
-      blogsData.push(newBlog);
-      res.status(201).json(newBlog);
+        user_id: userId
+      });
+      
+      if (!blogInput.success) {
+        return res.status(400).json({ error: blogInput.error });
+      }
+      
+      const blog = await storage.createBlog(blogInput.data);
+      res.status(201).json(blog);
     } catch (error) {
-      console.error("Error creating blog post:", error);
-      res.status(500).json({ error: "Failed to create blog post" });
+      console.error("Error creating blog:", error);
+      res.status(500).json({ error: "Failed to create blog" });
     }
   });
   
-  app.put("/api/blogs/:id", isAdminOrCore, (req, res) => {
+  app.put("/api/blogs/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = blogsData.findIndex(b => b.id === req.params.id);
-      if (index === -1) {
-        return res.status(404).json({ error: "Blog post not found" });
+      const blogId = parseInt(req.params.id);
+      const blog = await storage.getBlog(blogId);
+      
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
       }
       
-      blogsData[index] = { ...blogsData[index], ...req.body };
-      res.json(blogsData[index]);
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (blog.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this blog" });
+      }
+      
+      const updatedBlog = await storage.updateBlog(blogId, req.body);
+      res.json(updatedBlog);
     } catch (error) {
-      console.error("Error updating blog post:", error);
-      res.status(500).json({ error: "Failed to update blog post" });
+      console.error("Error updating blog:", error);
+      res.status(500).json({ error: "Failed to update blog" });
     }
   });
   
-  app.delete("/api/blogs/:id", isAdminOrCore, (req, res) => {
+  app.delete("/api/blogs/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = blogsData.findIndex(b => b.id === req.params.id);
-      if (index === -1) {
-        return res.status(404).json({ error: "Blog post not found" });
+      const blogId = parseInt(req.params.id);
+      const blog = await storage.getBlog(blogId);
+      
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
       }
       
-      blogsData.splice(index, 1);
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (blog.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this blog" });
+      }
+      
+      await storage.deleteBlog(blogId);
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting blog post:", error);
-      res.status(500).json({ error: "Failed to delete blog post" });
+      console.error("Error deleting blog:", error);
+      res.status(500).json({ error: "Failed to delete blog" });
     }
   });
   
-  // API endpoints for Research
-  let researchData = [...researchItems];
-  
-  app.get("/api/research", (req, res) => {
-    res.json(researchData);
-  });
-  
-  app.get("/api/research/:id", (req, res) => {
-    const research = researchData.find(r => r.id === req.params.id);
-    if (!research) {
-      return res.status(404).json({ error: "Research item not found" });
-    }
-    res.json(research);
-  });
-  
-  app.post("/api/research", isAdminOrCore, (req, res) => {
+  // Research compatibility endpoints
+  app.get("/api/research", async (req, res) => {
     try {
-      const newResearch = {
+      const researchItems = await storage.getAllResearch();
+      res.json(researchItems);
+    } catch (error) {
+      console.error("Error fetching research items:", error);
+      res.status(500).json({ error: "Failed to fetch research items" });
+    }
+  });
+  
+  app.get("/api/research/:id", async (req, res) => {
+    try {
+      const researchId = parseInt(req.params.id);
+      const research = await storage.getResearch(researchId);
+      
+      if (!research) {
+        return res.status(404).json({ error: "Research item not found" });
+      }
+      
+      res.json(research);
+    } catch (error) {
+      console.error("Error fetching research item:", error);
+      res.status(500).json({ error: "Failed to fetch research item" });
+    }
+  });
+  
+  app.post("/api/research", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const researchInput = insertResearchSchema.safeParse({
         ...req.body,
-        id: Math.random().toString(36).substring(2, 15)
-      };
-      researchData.push(newResearch);
-      res.status(201).json(newResearch);
+        user_id: userId
+      });
+      
+      if (!researchInput.success) {
+        return res.status(400).json({ error: researchInput.error });
+      }
+      
+      const research = await storage.createResearch(researchInput.data);
+      res.status(201).json(research);
     } catch (error) {
       console.error("Error creating research item:", error);
       res.status(500).json({ error: "Failed to create research item" });
     }
   });
   
-  app.put("/api/research/:id", isAdminOrCore, (req, res) => {
+  app.put("/api/research/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = researchData.findIndex(r => r.id === req.params.id);
-      if (index === -1) {
+      const researchId = parseInt(req.params.id);
+      const research = await storage.getResearch(researchId);
+      
+      if (!research) {
         return res.status(404).json({ error: "Research item not found" });
       }
       
-      researchData[index] = { ...researchData[index], ...req.body };
-      res.json(researchData[index]);
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (research.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this research item" });
+      }
+      
+      const updatedResearch = await storage.updateResearch(researchId, req.body);
+      res.json(updatedResearch);
     } catch (error) {
       console.error("Error updating research item:", error);
       res.status(500).json({ error: "Failed to update research item" });
     }
   });
   
-  app.delete("/api/research/:id", isAdminOrCore, (req, res) => {
+  app.delete("/api/research/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = researchData.findIndex(r => r.id === req.params.id);
-      if (index === -1) {
+      const researchId = parseInt(req.params.id);
+      const research = await storage.getResearch(researchId);
+      
+      if (!research) {
         return res.status(404).json({ error: "Research item not found" });
       }
       
-      researchData.splice(index, 1);
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (research.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this research item" });
+      }
+      
+      await storage.deleteResearch(researchId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting research item:", error);
@@ -410,58 +546,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // API endpoints for Events
-  let eventsData = [...events];
-  
-  app.get("/api/events", (req, res) => {
-    res.json(eventsData);
-  });
-  
-  app.get("/api/events/:id", (req, res) => {
-    const event = eventsData.find(e => e.id === req.params.id);
-    if (!event) {
-      return res.status(404).json({ error: "Event not found" });
-    }
-    res.json(event);
-  });
-  
-  app.post("/api/events", isAdminOrCore, (req, res) => {
+  // Events compatibility endpoints
+  app.get("/api/events", async (req, res) => {
     try {
-      const newEvent = {
+      const events = await storage.getAllEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+  
+  app.get("/api/events/:id", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getEvent(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  
+  app.post("/api/events", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const eventInput = insertEventSchema.safeParse({
         ...req.body,
-        id: Math.random().toString(36).substring(2, 15)
-      };
-      eventsData.push(newEvent);
-      res.status(201).json(newEvent);
+        user_id: userId
+      });
+      
+      if (!eventInput.success) {
+        return res.status(400).json({ error: eventInput.error });
+      }
+      
+      const event = await storage.createEvent(eventInput.data);
+      res.status(201).json(event);
     } catch (error) {
       console.error("Error creating event:", error);
       res.status(500).json({ error: "Failed to create event" });
     }
   });
   
-  app.put("/api/events/:id", isAdminOrCore, (req, res) => {
+  app.put("/api/events/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = eventsData.findIndex(e => e.id === req.params.id);
-      if (index === -1) {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getEvent(eventId);
+      
+      if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
       
-      eventsData[index] = { ...eventsData[index], ...req.body };
-      res.json(eventsData[index]);
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (event.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this event" });
+      }
+      
+      const updatedEvent = await storage.updateEvent(eventId, req.body);
+      res.json(updatedEvent);
     } catch (error) {
       console.error("Error updating event:", error);
       res.status(500).json({ error: "Failed to update event" });
     }
   });
   
-  app.delete("/api/events/:id", isAdminOrCore, (req, res) => {
+  app.delete("/api/events/:id", isAdminOrCore, async (req, res) => {
     try {
-      const index = eventsData.findIndex(e => e.id === req.params.id);
-      if (index === -1) {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getEvent(eventId);
+      
+      if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
       
-      eventsData.splice(index, 1);
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (event.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this event" });
+      }
+      
+      await storage.deleteEvent(eventId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -501,6 +679,683 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Replace the old in-memory API endpoints with database-backed ones
+  
+  // Projects API endpoints (database-backed)
+  app.get("/api/db/projects", async (req, res) => {
+    try {
+      const projects = await storage.getAllProjects();
+      res.json(projects);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+  
+  app.get("/api/db/projects/:id", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      res.status(500).json({ error: "Failed to fetch project" });
+    }
+  });
+  
+  app.post("/api/db/projects", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const projectInput = insertProjectSchema.safeParse({
+        ...req.body,
+        user_id: userId
+      });
+      
+      if (!projectInput.success) {
+        return res.status(400).json({ error: projectInput.error });
+      }
+      
+      const project = await storage.createProject(projectInput.data);
+      res.status(201).json(project);
+    } catch (error) {
+      console.error("Error creating project:", error);
+      res.status(500).json({ error: "Failed to create project" });
+    }
+  });
+  
+  app.put("/api/db/projects/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (project.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this project" });
+      }
+      
+      const updatedProject = await storage.updateProject(projectId, req.body);
+      res.json(updatedProject);
+    } catch (error) {
+      console.error("Error updating project:", error);
+      res.status(500).json({ error: "Failed to update project" });
+    }
+  });
+  
+  app.delete("/api/db/projects/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (project.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this project" });
+      }
+      
+      await storage.deleteProject(projectId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      res.status(500).json({ error: "Failed to delete project" });
+    }
+  });
+  
+  // Blogs API endpoints (database-backed)
+  app.get("/api/db/blogs", async (req, res) => {
+    try {
+      const blogs = await storage.getAllBlogs();
+      res.json(blogs);
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+      res.status(500).json({ error: "Failed to fetch blogs" });
+    }
+  });
+  
+  app.get("/api/db/blogs/:id", async (req, res) => {
+    try {
+      const blogId = parseInt(req.params.id);
+      const blog = await storage.getBlog(blogId);
+      
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+      
+      res.json(blog);
+    } catch (error) {
+      console.error("Error fetching blog:", error);
+      res.status(500).json({ error: "Failed to fetch blog" });
+    }
+  });
+  
+  app.post("/api/db/blogs", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const blogInput = insertBlogSchema.safeParse({
+        ...req.body,
+        user_id: userId
+      });
+      
+      if (!blogInput.success) {
+        return res.status(400).json({ error: blogInput.error });
+      }
+      
+      const blog = await storage.createBlog(blogInput.data);
+      res.status(201).json(blog);
+    } catch (error) {
+      console.error("Error creating blog:", error);
+      res.status(500).json({ error: "Failed to create blog" });
+    }
+  });
+  
+  app.put("/api/db/blogs/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const blogId = parseInt(req.params.id);
+      const blog = await storage.getBlog(blogId);
+      
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+      
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (blog.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this blog" });
+      }
+      
+      const updatedBlog = await storage.updateBlog(blogId, req.body);
+      res.json(updatedBlog);
+    } catch (error) {
+      console.error("Error updating blog:", error);
+      res.status(500).json({ error: "Failed to update blog" });
+    }
+  });
+  
+  app.delete("/api/db/blogs/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const blogId = parseInt(req.params.id);
+      const blog = await storage.getBlog(blogId);
+      
+      if (!blog) {
+        return res.status(404).json({ error: "Blog not found" });
+      }
+      
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (blog.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this blog" });
+      }
+      
+      await storage.deleteBlog(blogId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting blog:", error);
+      res.status(500).json({ error: "Failed to delete blog" });
+    }
+  });
+  
+  // Research API endpoints (database-backed)
+  app.get("/api/db/research", async (req, res) => {
+    try {
+      const researchItems = await storage.getAllResearch();
+      res.json(researchItems);
+    } catch (error) {
+      console.error("Error fetching research items:", error);
+      res.status(500).json({ error: "Failed to fetch research items" });
+    }
+  });
+  
+  app.get("/api/db/research/:id", async (req, res) => {
+    try {
+      const researchId = parseInt(req.params.id);
+      const research = await storage.getResearch(researchId);
+      
+      if (!research) {
+        return res.status(404).json({ error: "Research item not found" });
+      }
+      
+      res.json(research);
+    } catch (error) {
+      console.error("Error fetching research item:", error);
+      res.status(500).json({ error: "Failed to fetch research item" });
+    }
+  });
+  
+  app.post("/api/db/research", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const researchInput = insertResearchSchema.safeParse({
+        ...req.body,
+        user_id: userId
+      });
+      
+      if (!researchInput.success) {
+        return res.status(400).json({ error: researchInput.error });
+      }
+      
+      const research = await storage.createResearch(researchInput.data);
+      res.status(201).json(research);
+    } catch (error) {
+      console.error("Error creating research item:", error);
+      res.status(500).json({ error: "Failed to create research item" });
+    }
+  });
+  
+  app.put("/api/db/research/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const researchId = parseInt(req.params.id);
+      const research = await storage.getResearch(researchId);
+      
+      if (!research) {
+        return res.status(404).json({ error: "Research item not found" });
+      }
+      
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (research.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this research item" });
+      }
+      
+      const updatedResearch = await storage.updateResearch(researchId, req.body);
+      res.json(updatedResearch);
+    } catch (error) {
+      console.error("Error updating research item:", error);
+      res.status(500).json({ error: "Failed to update research item" });
+    }
+  });
+  
+  app.delete("/api/db/research/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const researchId = parseInt(req.params.id);
+      const research = await storage.getResearch(researchId);
+      
+      if (!research) {
+        return res.status(404).json({ error: "Research item not found" });
+      }
+      
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (research.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this research item" });
+      }
+      
+      await storage.deleteResearch(researchId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting research item:", error);
+      res.status(500).json({ error: "Failed to delete research item" });
+    }
+  });
+  
+  // Events API endpoints (database-backed)
+  app.get("/api/db/events", async (req, res) => {
+    try {
+      const events = await storage.getAllEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+  
+  app.get("/api/db/events/:id", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getEvent(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+  
+  app.post("/api/db/events", isAdminOrCore, async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const eventInput = insertEventSchema.safeParse({
+        ...req.body,
+        user_id: userId
+      });
+      
+      if (!eventInput.success) {
+        return res.status(400).json({ error: eventInput.error });
+      }
+      
+      const event = await storage.createEvent(eventInput.data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+  
+  app.put("/api/db/events/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getEvent(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      // Only allow the creator or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (event.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this event" });
+      }
+      
+      const updatedEvent = await storage.updateEvent(eventId, req.body);
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+  
+  app.delete("/api/db/events/:id", isAdminOrCore, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getEvent(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      // Only allow the creator or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (event.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this event" });
+      }
+      
+      await storage.deleteEvent(eventId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
+    }
+  });
+  
+  // Event Registration API endpoints
+  app.post("/api/db/event-registrations", async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { event_id } = req.body;
+      
+      if (!event_id) {
+        return res.status(400).json({ error: "Event ID is required" });
+      }
+      
+      // Check if user has already registered for this event
+      const existingRegistration = await storage.getEventRegistrationByUserAndEvent(userId, event_id);
+      if (existingRegistration) {
+        return res.status(400).json({ error: "You have already registered for this event" });
+      }
+      
+      const registrationInput = insertEventRegistrationSchema.safeParse({
+        event_id,
+        user_id: userId
+      });
+      
+      if (!registrationInput.success) {
+        return res.status(400).json({ error: registrationInput.error });
+      }
+      
+      const registration = await storage.createEventRegistration(registrationInput.data);
+      res.status(201).json(registration);
+    } catch (error) {
+      console.error("Error registering for event:", error);
+      res.status(500).json({ error: "Failed to register for event" });
+    }
+  });
+  
+  app.get("/api/db/event-registrations/user", async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const registrations = await storage.getEventRegistrationsByUser(userId);
+      res.json(registrations);
+    } catch (error) {
+      console.error("Error fetching user event registrations:", error);
+      res.status(500).json({ error: "Failed to fetch user event registrations" });
+    }
+  });
+  
+  app.get("/api/db/event-registrations/event/:eventId", isAdminOrCore, async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      const registrations = await storage.getEventRegistrationsByEvent(eventId);
+      res.json(registrations);
+    } catch (error) {
+      console.error("Error fetching event registrations:", error);
+      res.status(500).json({ error: "Failed to fetch event registrations" });
+    }
+  });
+  
+  app.delete("/api/db/event-registrations/:id", async (req, res) => {
+    try {
+      const registrationId = parseInt(req.params.id);
+      const registration = await storage.getEventRegistration(registrationId);
+      
+      if (!registration) {
+        return res.status(404).json({ error: "Registration not found" });
+      }
+      
+      // Only allow the registered user or admin to cancel registration
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (registration.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to cancel this registration" });
+      }
+      
+      await storage.deleteEventRegistration(registrationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error canceling event registration:", error);
+      res.status(500).json({ error: "Failed to cancel event registration" });
+    }
+  });
+  
+  // Comment API endpoints
+  app.post("/api/db/comments", async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const commentInput = insertCommentSchema.safeParse({
+        ...req.body,
+        user_id: userId
+      });
+      
+      if (!commentInput.success) {
+        return res.status(400).json({ error: commentInput.error });
+      }
+      
+      const comment = await storage.createComment(commentInput.data);
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ error: "Failed to create comment" });
+    }
+  });
+  
+  app.get("/api/db/comments/project/:projectId", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const comments = await storage.getCommentsByProject(projectId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching project comments:", error);
+      res.status(500).json({ error: "Failed to fetch project comments" });
+    }
+  });
+  
+  app.get("/api/db/comments/blog/:blogId", async (req, res) => {
+    try {
+      const blogId = parseInt(req.params.blogId);
+      const comments = await storage.getCommentsByBlog(blogId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching blog comments:", error);
+      res.status(500).json({ error: "Failed to fetch blog comments" });
+    }
+  });
+  
+  app.get("/api/db/comments/research/:researchId", async (req, res) => {
+    try {
+      const researchId = parseInt(req.params.researchId);
+      const comments = await storage.getCommentsByResearch(researchId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching research comments:", error);
+      res.status(500).json({ error: "Failed to fetch research comments" });
+    }
+  });
+  
+  app.put("/api/db/comments/:id", async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.id);
+      const comment = await storage.getComment(commentId);
+      
+      if (!comment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+      
+      // Only allow the commenter or admin to update
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (comment.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to update this comment" });
+      }
+      
+      const updatedComment = await storage.updateComment(commentId, { content: req.body.content });
+      res.json(updatedComment);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      res.status(500).json({ error: "Failed to update comment" });
+    }
+  });
+  
+  app.delete("/api/db/comments/:id", async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.id);
+      const comment = await storage.getComment(commentId);
+      
+      if (!comment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+      
+      // Only allow the commenter or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (comment.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this comment" });
+      }
+      
+      await storage.deleteComment(commentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+  
+  // Core Team Private Messages (only for core team and admin)
+  app.post("/api/db/messages", async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== UserRole.CORE_TEAM && user.role !== UserRole.ADMIN)) {
+        return res.status(403).json({ error: "Only core team members and admins can send messages" });
+      }
+      
+      const messageInput = insertMessageSchema.safeParse({
+        content: req.body.content,
+        user_id: userId
+      });
+      
+      if (!messageInput.success) {
+        return res.status(400).json({ error: messageInput.error });
+      }
+      
+      const message = await storage.createMessage(messageInput.data);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+  
+  app.get("/api/db/messages", async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== UserRole.CORE_TEAM && user.role !== UserRole.ADMIN)) {
+        return res.status(403).json({ error: "Only core team members and admins can view messages" });
+      }
+      
+      const messages = await storage.getAllMessages();
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+  
+  app.delete("/api/db/messages/:id", async (req, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const message = await storage.getMessage(messageId);
+      
+      if (!message) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+      
+      // Only allow the sender or admin to delete
+      const userId = req.session?.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (message.user_id !== userId && user?.role !== UserRole.ADMIN) {
+        return res.status(403).json({ error: "Not authorized to delete this message" });
+      }
+      
+      await storage.deleteMessage(messageId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(500).json({ error: "Failed to delete message" });
+    }
+  });
+  
   // API endpoint to check if current user is logged in and get their details
   app.get("/api/users/me", async (req, res) => {
     const userId = req.session?.userId;
