@@ -9,9 +9,9 @@ interface LogoProps {
 
 const Logo = ({ size = "md", color = "dark", showText = true }: LogoProps) => {
   const sizeClasses = {
-    sm: "h-9",
-    md: "h-11",
-    lg: "h-16",
+    sm: "h-12",
+    md: "h-16",
+    lg: "h-20",
   };
 
   // Logo source based on color mode
