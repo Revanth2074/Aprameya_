@@ -75,12 +75,12 @@ const Navbar = () => {
           <Link 
             href="/" 
             onClick={closeMobileMenu} 
-            className="flex items-center"
+            className="flex items-center mr-4"
           >
             <Logo 
               color="dark" 
               size={scrolled ? "sm" : "md"} 
-              showText={!scrolled}
+              showText={true}
             />
           </Link>
           
