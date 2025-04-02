@@ -9,6 +9,7 @@ import {
   messages,
   type User, 
   type InsertUser, 
+  type UpdateUserProfile,
   type Project,
   type InsertProject,
   type Blog,
@@ -35,6 +36,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserRole(userId: number, newRole: UserRoleType): Promise<User | undefined>;
+  updateUserProfile(userId: number, profileData: UpdateUserProfile): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   getUsersByRole(role: UserRoleType): Promise<User[]>;
   
@@ -125,6 +127,16 @@ export class DatabaseStorage implements IStorage {
     const [updatedUser] = await db
       .update(users)
       .set({ role: newRole })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+  
+  async updateUserProfile(userId: number, profileData: UpdateUserProfile): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(profileData)
       .where(eq(users.id, userId))
       .returning();
     

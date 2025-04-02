@@ -20,6 +20,16 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   role: text("role").notNull().default(UserRole.ASPIRANT),
   created_at: text("created_at").notNull().default(new Date().toISOString()),
+  // Team member additional fields
+  display_name: text("display_name"),
+  profile_image: text("profile_image"),
+  department: text("department"),
+  year: text("year"),
+  role_title: text("role_title"), // Position/title in the team
+  tags: text("tags"), // Comma-separated tags (skills or specialties)
+  linkedin: text("linkedin"),
+  github: text("github"),
+  bio: text("bio"),
 });
 
 export const projects = pgTable("projects", {
@@ -178,6 +188,18 @@ export const insertUserSchema = createInsertSchema(users).pick({
   // Note: role is not included as it defaults to "aspirant"
 });
 
+export const updateUserProfileSchema = createInsertSchema(users).pick({
+  display_name: true,
+  profile_image: true,
+  department: true,
+  year: true,
+  role_title: true,
+  tags: true,
+  linkedin: true,
+  github: true,
+  bio: true,
+}).partial();
+
 // Insert schemas for all entities
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true });
 export const insertBlogSchema = createInsertSchema(blogs).omit({ id: true });
@@ -189,6 +211,7 @@ export const insertMessageSchema = createInsertSchema(messages).omit({ id: true 
 
 // Type definitions
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type User = typeof users.$inferSelect;
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;

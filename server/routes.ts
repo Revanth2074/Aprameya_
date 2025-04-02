@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   insertUserSchema, 
+  updateUserProfileSchema,
   insertProjectSchema,
   insertBlogSchema,
   insertResearchSchema,
@@ -10,7 +11,8 @@ import {
   insertCommentSchema,
   insertEventRegistrationSchema,
   insertMessageSchema,
-  UserRole 
+  UserRole,
+  type UpdateUserProfile 
 } from "@shared/schema";
 import { z } from "zod";
 import 'express-session';
@@ -1378,6 +1380,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching current user:", error);
       res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // API endpoint to get all core team members
+  app.get("/api/users/core-team", async (req, res) => {
+    try {
+      const coreTeamMembers = await storage.getUsersByRole(UserRole.CORE);
+      
+      // Don't send passwords back to client
+      const membersWithoutPasswords = coreTeamMembers.map(member => {
+        const { password, ...memberWithoutPassword } = member;
+        return memberWithoutPassword;
+      });
+      
+      res.json(membersWithoutPasswords);
+    } catch (error) {
+      console.error("Error fetching core team members:", error);
+      res.status(500).json({ error: "Failed to fetch core team members" });
+    }
+  });
+  
+  // API endpoint to update a user's profile information
+  app.patch("/api/users/profile", async (req, res) => {
+    const userId = req.session?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      // Validate the profile update data
+      const profileData = updateUserProfileSchema.safeParse(req.body);
+      
+      if (!profileData.success) {
+        return res.status(400).json({ error: "Invalid profile data", details: profileData.error });
+      }
+      
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(userId, profileData.data);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update profile" });
+      }
+      
+      // Don't send password back to client
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ error: "Failed to update user profile" });
     }
   });
 

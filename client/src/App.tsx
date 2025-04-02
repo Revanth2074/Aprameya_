@@ -15,10 +15,19 @@ import Signup from "./pages/Signup";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/not-found";
 
+// Import User type
+import { User } from "@shared/schema";
+
 // Protected route component
-const ProtectedRoute = ({ component: Component, roles, ...rest }: any) => {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['/api/users/me'],
+interface ProtectedRouteProps {
+  component: React.ComponentType<any>;
+  roles?: string[];
+  [key: string]: any;
+}
+
+const ProtectedRoute = ({ component: Component, roles, ...rest }: ProtectedRouteProps) => {
+  const { data: user, isLoading } = useQuery<User>({
+    queryKey: ['/api/me'],
     staleTime: 5000,
   });
   
@@ -45,8 +54,8 @@ const ProtectedRoute = ({ component: Component, roles, ...rest }: any) => {
 
 function App() {
   // Get current user for conditional rendering
-  const { data: user } = useQuery({
-    queryKey: ['/api/users/me'],
+  const { data: user } = useQuery<User>({
+    queryKey: ['/api/me'],
     staleTime: 5000,
   });
 

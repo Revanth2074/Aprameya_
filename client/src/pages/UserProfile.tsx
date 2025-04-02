@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, EventRegistration, Comment } from '@shared/schema';
 
 const UserProfile = () => {
   const queryClient = useQueryClient();
@@ -21,27 +22,29 @@ const UserProfile = () => {
   });
 
   // Fetch current user, user's event registrations, and comments
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/users/me'],
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ['/api/me'],
     staleTime: 5000,
   });
 
-  const { data: userEventRegistrations = [] } = useQuery({
-    queryKey: ['/api/users/me/event-registrations'],
+  const { data: userEventRegistrations = [] } = useQuery<EventRegistration[]>({
+    queryKey: ['/api/event-registrations/user'],
     staleTime: 5000,
+    enabled: !!currentUser,
   });
 
-  const { data: userComments = [] } = useQuery({
-    queryKey: ['/api/users/me/comments'],
+  const { data: userComments = [] } = useQuery<Comment[]>({
+    queryKey: ['/api/comments/user'],
     staleTime: 5000,
+    enabled: !!currentUser,
   });
 
   // Update profile mutation
   const updateProfile = useMutation({
     mutationFn: (userData: any) => 
-      apiRequest('/api/users/me', { method: 'PATCH', body: JSON.stringify(userData) }),
+      apiRequest('/api/user/profile', { method: 'PATCH', body: JSON.stringify(userData) }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/me'] });
       toast({
         title: 'Success',
         description: 'Profile updated successfully',
@@ -67,7 +70,7 @@ const UserProfile = () => {
     mutationFn: (registrationId: number) => 
       apiRequest(`/api/event-registrations/${registrationId}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users/me/event-registrations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/event-registrations/user'] });
       toast({
         title: 'Success',
         description: 'Event registration cancelled successfully',
@@ -80,7 +83,7 @@ const UserProfile = () => {
     mutationFn: (commentId: number) => 
       apiRequest(`/api/comments/${commentId}`, { method: 'DELETE' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users/me/comments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/comments/user'] });
       toast({
         title: 'Success',
         description: 'Comment deleted successfully',

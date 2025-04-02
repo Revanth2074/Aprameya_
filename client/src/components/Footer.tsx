@@ -15,16 +15,16 @@ const Footer = () => {
               Pioneering autonomous vehicle innovation through student-led research and development.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-white/70 hover:text-white transition-colors">
+              <a href="https://x.com/aprameya_klu" className="text-white/70 hover:text-white transition-colors">
                 <FaTwitter />
               </a>
-              <a href="#" className="text-white/70 hover:text-white transition-colors">
+              <a href="https://www.linkedin.com/company/aprameyaclub/ " className="text-white/70 hover:text-white transition-colors">
                 <FaLinkedinIn />
               </a>
               <a href="#" className="text-white/70 hover:text-white transition-colors">
                 <FaGithub />
               </a>
-              <a href="#" className="text-white/70 hover:text-white transition-colors">
+              <a href="https://www.instagram.com/aprameya_klu?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" className="text-white/70 hover:text-white transition-colors">
                 <FaInstagram />
               </a>
             </div>
@@ -71,15 +71,15 @@ const Footer = () => {
             <ul className="space-y-2">
               <li className="flex items-start">
                 <FaEnvelope className="mt-1 mr-3 text-white/70" />
-                <span className="text-white/70">contact@aprameya.com</span>
+                <span className="text-white/70">aprameya.techclub@kluniversity.in</span>
               </li>
               <li className="flex items-start">
                 <FaMapMarkerAlt className="mt-1 mr-3 text-white/70" />
-                <span className="text-white/70">Tech Hub, KLU Campus, Andhra Pradesh, India</span>
+                <span className="text-white/70">KLU Campus, Andhra Pradesh, India</span>
               </li>
               <li className="flex items-start">
                 <FaPhoneAlt className="mt-1 mr-3 text-white/70" />
-                <span className="text-white/70">+91 9876543210</span>
+                <span className="text-white/70">+91 7093518889</span>
               </li>
             </ul>
           </div>
