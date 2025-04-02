@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import session from 'express-session';
-import memorystore from 'memorystore';
+import { storage } from "./storage";
 
 declare module 'express-session' {
   interface SessionData {
@@ -14,12 +14,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Set up in-memory session store
-const MemoryStore = memorystore(session);
+// Set up session with the storage's session store
 app.use(session({
-  store: new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  }),
+  store: storage.sessionStore,
   secret: process.env.SESSION_SECRET || 'aprameya-session-secret',
   resave: false,
   saveUninitialized: false,
