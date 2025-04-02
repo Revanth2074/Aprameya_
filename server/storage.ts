@@ -132,15 +132,18 @@ export class MemStorage implements IStorage {
       id: this.userIdCounter++,
       username: 'admin',
       password: 'admin123',
-      name: 'Administrator',
       role: UserRole.ADMIN,
       email: 'admin@aprameya.com',
+      created_at: new Date().toISOString(),
+      display_name: 'Administrator',
+      profile_image: '',
       department: 'Management',
       year: '2023',
-      bio: 'System Administrator',
-      profile_image: '',
-      social_links: {},
-      created_at: new Date().toISOString()
+      role_title: 'System Administrator',
+      tags: 'admin,management',
+      linkedin: '',
+      github: '',
+      bio: 'System Administrator'
     });
     
     // Add core team member
@@ -148,15 +151,18 @@ export class MemStorage implements IStorage {
       id: this.userIdCounter++,
       username: 'coreteam',
       password: 'core123',
-      name: 'Core Team Member',
       role: UserRole.CORE,
       email: 'core@aprameya.com',
+      created_at: new Date().toISOString(),
+      display_name: 'Core Team Member',
+      profile_image: '',
       department: 'Robotics',
       year: '2023',
-      bio: 'Core team member for autonomous vehicles',
-      profile_image: '',
-      social_links: {},
-      created_at: new Date().toISOString()
+      role_title: 'Core Developer',
+      tags: 'robotics,autonomous',
+      linkedin: '',
+      github: '',
+      bio: 'Core team member for autonomous vehicles'
     });
     
     // Add aspirant user
@@ -164,15 +170,18 @@ export class MemStorage implements IStorage {
       id: this.userIdCounter++,
       username: 'aspirant',
       password: 'aspirant123',
-      name: 'Aspirant User',
       role: UserRole.ASPIRANT,
       email: 'aspirant@aprameya.com',
+      created_at: new Date().toISOString(),
+      display_name: 'Aspirant User',
+      profile_image: '',
       department: 'Robotics',
       year: '2023',
-      bio: 'Interested in autonomous vehicles',
-      profile_image: '',
-      social_links: {},
-      created_at: new Date().toISOString()
+      role_title: 'Member',
+      tags: 'aspiring,learning',
+      linkedin: '',
+      github: '',
+      bio: 'Interested in autonomous vehicles'
     });
   }
   
