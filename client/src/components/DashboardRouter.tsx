@@ -15,7 +15,7 @@ const DashboardRouter: React.FC = () => {
     isLoading, 
     error 
   } = useQuery({
-    queryKey: ['/api/me'],
+    queryKey: ['/api/users/me'],
     queryFn: getQueryFn({ on401: 'returnNull' }),
   });
 
@@ -28,8 +28,7 @@ const DashboardRouter: React.FC = () => {
   }
 
   if (error || !user) {
-    // Redirect to login page if not authenticated
-    setLocation('/login');
+    setLocation('/auth');
     return null;
   }
 

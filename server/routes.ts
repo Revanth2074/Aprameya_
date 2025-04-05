@@ -16,7 +16,6 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import 'express-session';
-import { analyticsService, notificationService } from './externalServices';
 
 // Middleware to check if user is admin
 const isAdmin = async (req: Request, res: Response, next: Function) => {
@@ -1432,115 +1431,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user profile:", error);
       res.status(500).json({ error: "Failed to update user profile" });
-    }
-  });
-
-  // Third-party integration endpoints
-  // These demonstrate how to use external services while maintaining the in-memory auth system
-  
-  // Analytics endpoints
-  app.post("/api/analytics/event", async (req, res) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-      
-      const { eventType, eventData } = req.body;
-      
-      if (!eventType) {
-        return res.status(400).json({ error: "Event type is required" });
-      }
-      
-      const success = await analyticsService.trackEvent(userId, eventType, eventData || {});
-      
-      if (success) {
-        res.status(201).json({ success: true });
-      } else {
-        // Still return 200 even if analytics failed, to not disrupt user experience
-        res.status(200).json({ 
-          success: false, 
-          message: "Event tracked in memory only, external analytics service unavailable" 
-        });
-      }
-    } catch (error) {
-      console.error("Error tracking analytics event:", error);
-      res.status(500).json({ error: "Failed to track event" });
-    }
-  });
-  
-  app.get("/api/analytics/user-activity", async (req, res) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!user || (user.role !== UserRole.ADMIN && user.role !== UserRole.CORE)) {
-        return res.status(403).json({ error: "Not authorized" });
-      }
-      
-      const targetUserId = parseInt(req.query.userId as string) || userId;
-      const limit = parseInt(req.query.limit as string) || 100;
-      
-      const activity = await analyticsService.getUserActivity(targetUserId, limit);
-      
-      res.json(activity);
-    } catch (error) {
-      console.error("Error fetching user activity:", error);
-      res.status(500).json({ error: "Failed to fetch user activity" });
-    }
-  });
-  
-  // Notification endpoints
-  app.post("/api/notifications/send", isAdminOrCore, async (req, res) => {
-    try {
-      const { userId, title, message } = req.body;
-      
-      if (!userId || !title || !message) {
-        return res.status(400).json({ error: "User ID, title, and message are required" });
-      }
-      
-      const targetUser = await storage.getUser(parseInt(userId));
-      if (!targetUser) {
-        return res.status(404).json({ error: "Target user not found" });
-      }
-      
-      const success = await notificationService.sendNotification(
-        targetUser.id, 
-        title, 
-        message
-      );
-      
-      if (success) {
-        res.status(201).json({ success: true });
-      } else {
-        // Return partial success if notification service is unavailable
-        res.status(200).json({ 
-          success: false, 
-          message: "Notification could not be sent to external service" 
-        });
-      }
-    } catch (error) {
-      console.error("Error sending notification:", error);
-      res.status(500).json({ error: "Failed to send notification" });
-    }
-  });
-  
-  app.get("/api/notifications", async (req, res) => {
-    try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
-      }
-      
-      const notifications = await notificationService.getUserNotifications(userId);
-      
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ error: "Failed to fetch notifications" });
     }
   });
 

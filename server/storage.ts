@@ -27,8 +27,8 @@ import {
   UserRole, 
   type UserRoleType 
 } from "@shared/schema";
-import createMemoryStore from "memorystore";
-import session from 'express-session';
+import { db } from "./db";
+import { and, eq, or } from "drizzle-orm";
 
 export interface IStorage {
   // User Operations
@@ -92,384 +92,309 @@ export interface IStorage {
   getAllMessages(): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   deleteMessage(id: number): Promise<boolean>;
-  
-  // Session Store
-  sessionStore: session.Store;
 }
 
-// In-memory storage class
-export class MemStorage implements IStorage {
-  private users: User[] = [];
-  private projects: Project[] = [];
-  private blogs: Blog[] = [];
-  private researchItems: Research[] = [];
-  private events: Event[] = [];
-  private eventRegistrations: EventRegistration[] = [];
-  private comments: Comment[] = [];
-  private messages: Message[] = [];
-  
-  // AutoIncrement counters for IDs
-  private userIdCounter = 1;
-  private projectIdCounter = 1;
-  private blogIdCounter = 1;
-  private researchIdCounter = 1;
-  private eventIdCounter = 1;
-  private eventRegistrationIdCounter = 1;
-  private commentIdCounter = 1;
-  private messageIdCounter = 1;
-  
-  sessionStore: session.Store;
-  
-  constructor() {
-    // Create memory session store
-    const MemoryStore = createMemoryStore(session);
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    });
-    
-    // Add admin user
-    this.users.push({
-      id: this.userIdCounter++,
-      username: 'admin',
-      password: 'admin123',
-      role: UserRole.ADMIN,
-      email: 'admin@aprameya.com',
-      created_at: new Date().toISOString(),
-      display_name: 'Administrator',
-      profile_image: '',
-      department: 'Management',
-      year: '2023',
-      role_title: 'System Administrator',
-      tags: 'admin,management',
-      linkedin: '',
-      github: '',
-      bio: 'System Administrator'
-    });
-    
-    // Add core team member
-    this.users.push({
-      id: this.userIdCounter++,
-      username: 'coreteam',
-      password: 'core123',
-      role: UserRole.CORE,
-      email: 'core@aprameya.com',
-      created_at: new Date().toISOString(),
-      display_name: 'Core Team Member',
-      profile_image: '',
-      department: 'Robotics',
-      year: '2023',
-      role_title: 'Core Developer',
-      tags: 'robotics,autonomous',
-      linkedin: '',
-      github: '',
-      bio: 'Core team member for autonomous vehicles'
-    });
-    
-    // Add aspirant user
-    this.users.push({
-      id: this.userIdCounter++,
-      username: 'aspirant',
-      password: 'aspirant123',
-      role: UserRole.ASPIRANT,
-      email: 'aspirant@aprameya.com',
-      created_at: new Date().toISOString(),
-      display_name: 'Aspirant User',
-      profile_image: '',
-      department: 'Robotics',
-      year: '2023',
-      role_title: 'Member',
-      tags: 'aspiring,learning',
-      linkedin: '',
-      github: '',
-      bio: 'Interested in autonomous vehicles'
-    });
-  }
-  
+export class DatabaseStorage implements IStorage {
   // User Operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.find(user => user.id === id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return this.users.find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
-  
+
   async getUsersByRole(role: UserRoleType): Promise<User[]> {
-    return this.users.filter(user => user.role === role);
+    return await db.select().from(users).where(eq(users.role, role));
   }
-  
+
   async createUser(insertUser: InsertUser): Promise<User> {
-    const user: User = {
-      id: this.userIdCounter++,
-      ...insertUser,
-      role: UserRole.ASPIRANT,
-      created_at: new Date().toISOString()
-    };
-    this.users.push(user);
+    // Always create users as ASPIRANT role
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        role: UserRole.ASPIRANT,
+        created_at: new Date().toISOString()
+      })
+      .returning();
     return user;
   }
-  
+
   async updateUserRole(userId: number, newRole: UserRoleType): Promise<User | undefined> {
-    const userIndex = this.users.findIndex(user => user.id === userId);
-    if (userIndex === -1) return undefined;
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role: newRole })
+      .where(eq(users.id, userId))
+      .returning();
     
-    this.users[userIndex].role = newRole;
-    return this.users[userIndex];
+    return updatedUser;
   }
   
   async updateUserProfile(userId: number, profileData: UpdateUserProfile): Promise<User | undefined> {
-    const userIndex = this.users.findIndex(user => user.id === userId);
-    if (userIndex === -1) return undefined;
+    const [updatedUser] = await db
+      .update(users)
+      .set(profileData)
+      .where(eq(users.id, userId))
+      .returning();
     
-    this.users[userIndex] = { ...this.users[userIndex], ...profileData };
-    return this.users[userIndex];
+    return updatedUser;
   }
   
   async getAllUsers(): Promise<User[]> {
-    return this.users;
+    return await db.select().from(users);
   }
   
   // Project Operations
   async getProject(id: number): Promise<Project | undefined> {
-    return this.projects.find(project => project.id === id);
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project || undefined;
   }
   
   async getAllProjects(): Promise<Project[]> {
-    return this.projects;
+    return await db.select().from(projects);
   }
   
   async createProject(project: InsertProject): Promise<Project> {
-    const newProject: Project = {
-      id: this.projectIdCounter++,
-      ...project,
-      created_at: new Date().toISOString(),
-    };
-    this.projects.push(newProject);
+    const [newProject] = await db
+      .insert(projects)
+      .values(project)
+      .returning();
     return newProject;
   }
   
   async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
-    const projectIndex = this.projects.findIndex(p => p.id === id);
-    if (projectIndex === -1) return undefined;
-    
-    this.projects[projectIndex] = { ...this.projects[projectIndex], ...project };
-    return this.projects[projectIndex];
+    const [updatedProject] = await db
+      .update(projects)
+      .set(project)
+      .where(eq(projects.id, id))
+      .returning();
+    return updatedProject || undefined;
   }
   
   async deleteProject(id: number): Promise<boolean> {
-    const initialLength = this.projects.length;
-    this.projects = this.projects.filter(project => project.id !== id);
-    return initialLength > this.projects.length;
+    await db
+      .delete(projects)
+      .where(eq(projects.id, id));
+    return true;
   }
   
   // Blog Operations
   async getBlog(id: number): Promise<Blog | undefined> {
-    return this.blogs.find(blog => blog.id === id);
+    const [blog] = await db.select().from(blogs).where(eq(blogs.id, id));
+    return blog || undefined;
   }
   
   async getAllBlogs(): Promise<Blog[]> {
-    return this.blogs;
+    return await db.select().from(blogs);
   }
   
   async createBlog(blog: InsertBlog): Promise<Blog> {
-    const newBlog: Blog = {
-      id: this.blogIdCounter++,
-      ...blog,
-      created_at: new Date().toISOString(),
-    };
-    this.blogs.push(newBlog);
+    const [newBlog] = await db
+      .insert(blogs)
+      .values(blog)
+      .returning();
     return newBlog;
   }
   
   async updateBlog(id: number, blog: Partial<InsertBlog>): Promise<Blog | undefined> {
-    const blogIndex = this.blogs.findIndex(b => b.id === id);
-    if (blogIndex === -1) return undefined;
-    
-    this.blogs[blogIndex] = { ...this.blogs[blogIndex], ...blog };
-    return this.blogs[blogIndex];
+    const [updatedBlog] = await db
+      .update(blogs)
+      .set(blog)
+      .where(eq(blogs.id, id))
+      .returning();
+    return updatedBlog || undefined;
   }
   
   async deleteBlog(id: number): Promise<boolean> {
-    const initialLength = this.blogs.length;
-    this.blogs = this.blogs.filter(blog => blog.id !== id);
-    return initialLength > this.blogs.length;
+    await db
+      .delete(blogs)
+      .where(eq(blogs.id, id));
+    return true;
   }
   
   // Research Operations
   async getResearch(id: number): Promise<Research | undefined> {
-    return this.researchItems.find(research => research.id === id);
+    const [research] = await db.select().from(researchItems).where(eq(researchItems.id, id));
+    return research || undefined;
   }
   
   async getAllResearch(): Promise<Research[]> {
-    return this.researchItems;
+    return await db.select().from(researchItems);
   }
   
   async createResearch(research: InsertResearch): Promise<Research> {
-    const newResearch: Research = {
-      id: this.researchIdCounter++,
-      ...research,
-      created_at: new Date().toISOString(),
-    };
-    this.researchItems.push(newResearch);
+    const [newResearch] = await db
+      .insert(researchItems)
+      .values(research)
+      .returning();
     return newResearch;
   }
   
   async updateResearch(id: number, research: Partial<InsertResearch>): Promise<Research | undefined> {
-    const researchIndex = this.researchItems.findIndex(r => r.id === id);
-    if (researchIndex === -1) return undefined;
-    
-    this.researchItems[researchIndex] = { ...this.researchItems[researchIndex], ...research };
-    return this.researchItems[researchIndex];
+    const [updatedResearch] = await db
+      .update(researchItems)
+      .set(research)
+      .where(eq(researchItems.id, id))
+      .returning();
+    return updatedResearch || undefined;
   }
   
   async deleteResearch(id: number): Promise<boolean> {
-    const initialLength = this.researchItems.length;
-    this.researchItems = this.researchItems.filter(research => research.id !== id);
-    return initialLength > this.researchItems.length;
+    await db
+      .delete(researchItems)
+      .where(eq(researchItems.id, id));
+    return true;
   }
   
   // Event Operations
   async getEvent(id: number): Promise<Event | undefined> {
-    return this.events.find(event => event.id === id);
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
   }
   
   async getAllEvents(): Promise<Event[]> {
-    return this.events;
+    return await db.select().from(events);
   }
   
   async createEvent(event: InsertEvent): Promise<Event> {
-    const newEvent: Event = {
-      id: this.eventIdCounter++,
-      ...event,
-      created_at: new Date().toISOString(),
-    };
-    this.events.push(newEvent);
+    const [newEvent] = await db
+      .insert(events)
+      .values(event)
+      .returning();
     return newEvent;
   }
   
   async updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined> {
-    const eventIndex = this.events.findIndex(e => e.id === id);
-    if (eventIndex === -1) return undefined;
-    
-    this.events[eventIndex] = { ...this.events[eventIndex], ...event };
-    return this.events[eventIndex];
+    const [updatedEvent] = await db
+      .update(events)
+      .set(event)
+      .where(eq(events.id, id))
+      .returning();
+    return updatedEvent || undefined;
   }
   
   async deleteEvent(id: number): Promise<boolean> {
-    const initialLength = this.events.length;
-    this.events = this.events.filter(event => event.id !== id);
-    return initialLength > this.events.length;
+    await db
+      .delete(events)
+      .where(eq(events.id, id));
+    return true;
   }
   
   // EventRegistration Operations
   async getEventRegistration(id: number): Promise<EventRegistration | undefined> {
-    return this.eventRegistrations.find(registration => registration.id === id);
+    const [registration] = await db.select().from(eventRegistrations).where(eq(eventRegistrations.id, id));
+    return registration || undefined;
   }
   
   async getEventRegistrationByUserAndEvent(userId: number, eventId: number): Promise<EventRegistration | undefined> {
-    return this.eventRegistrations.find(
-      registration => registration.user_id === userId && registration.event_id === eventId
-    );
+    const [registration] = await db.select().from(eventRegistrations)
+      .where(and(
+        eq(eventRegistrations.user_id, userId),
+        eq(eventRegistrations.event_id, eventId)
+      ));
+    return registration || undefined;
   }
   
   async getAllEventRegistrations(): Promise<EventRegistration[]> {
-    return this.eventRegistrations;
+    return await db.select().from(eventRegistrations);
   }
   
   async getEventRegistrationsByUser(userId: number): Promise<EventRegistration[]> {
-    return this.eventRegistrations.filter(registration => registration.user_id === userId);
+    return await db.select().from(eventRegistrations).where(eq(eventRegistrations.user_id, userId));
   }
   
   async getEventRegistrationsByEvent(eventId: number): Promise<EventRegistration[]> {
-    return this.eventRegistrations.filter(registration => registration.event_id === eventId);
+    return await db.select().from(eventRegistrations).where(eq(eventRegistrations.event_id, eventId));
   }
   
   async createEventRegistration(registration: InsertEventRegistration): Promise<EventRegistration> {
-    const newRegistration: EventRegistration = {
-      id: this.eventRegistrationIdCounter++,
-      ...registration,
-      created_at: new Date().toISOString(),
-    };
-    this.eventRegistrations.push(newRegistration);
+    const [newRegistration] = await db
+      .insert(eventRegistrations)
+      .values(registration)
+      .returning();
     return newRegistration;
   }
   
   async deleteEventRegistration(id: number): Promise<boolean> {
-    const initialLength = this.eventRegistrations.length;
-    this.eventRegistrations = this.eventRegistrations.filter(registration => registration.id !== id);
-    return initialLength > this.eventRegistrations.length;
+    await db
+      .delete(eventRegistrations)
+      .where(eq(eventRegistrations.id, id));
+    return true;
   }
   
   // Comment Operations
   async getComment(id: number): Promise<Comment | undefined> {
-    return this.comments.find(comment => comment.id === id);
+    const [comment] = await db.select().from(comments).where(eq(comments.id, id));
+    return comment || undefined;
   }
   
   async getCommentsByUser(userId: number): Promise<Comment[]> {
-    return this.comments.filter(comment => comment.user_id === userId);
+    return await db.select().from(comments).where(eq(comments.user_id, userId));
   }
   
   async getCommentsByProject(projectId: number): Promise<Comment[]> {
-    return this.comments.filter(comment => comment.project_id === projectId);
+    return await db.select().from(comments).where(eq(comments.project_id, projectId));
   }
   
   async getCommentsByBlog(blogId: number): Promise<Comment[]> {
-    return this.comments.filter(comment => comment.blog_id === blogId);
+    return await db.select().from(comments).where(eq(comments.blog_id, blogId));
   }
   
   async getCommentsByResearch(researchId: number): Promise<Comment[]> {
-    return this.comments.filter(comment => comment.research_id === researchId);
+    return await db.select().from(comments).where(eq(comments.research_id, researchId));
   }
   
   async createComment(comment: InsertComment): Promise<Comment> {
-    const newComment: Comment = {
-      id: this.commentIdCounter++,
-      ...comment,
-      created_at: new Date().toISOString(),
-    };
-    this.comments.push(newComment);
+    const [newComment] = await db
+      .insert(comments)
+      .values(comment)
+      .returning();
     return newComment;
   }
   
   async updateComment(id: number, comment: Partial<InsertComment>): Promise<Comment | undefined> {
-    const commentIndex = this.comments.findIndex(c => c.id === id);
-    if (commentIndex === -1) return undefined;
-    
-    this.comments[commentIndex] = { ...this.comments[commentIndex], ...comment };
-    return this.comments[commentIndex];
+    const [updatedComment] = await db
+      .update(comments)
+      .set(comment)
+      .where(eq(comments.id, id))
+      .returning();
+    return updatedComment || undefined;
   }
   
   async deleteComment(id: number): Promise<boolean> {
-    const initialLength = this.comments.length;
-    this.comments = this.comments.filter(comment => comment.id !== id);
-    return initialLength > this.comments.length;
+    await db
+      .delete(comments)
+      .where(eq(comments.id, id));
+    return true;
   }
   
   // Message Operations (Core Team Chat)
   async getMessage(id: number): Promise<Message | undefined> {
-    return this.messages.find(message => message.id === id);
+    const [message] = await db.select().from(messages).where(eq(messages.id, id));
+    return message || undefined;
   }
   
   async getAllMessages(): Promise<Message[]> {
-    return this.messages;
+    return await db.select().from(messages);
   }
   
   async createMessage(message: InsertMessage): Promise<Message> {
-    const newMessage: Message = {
-      id: this.messageIdCounter++,
-      ...message,
-      created_at: new Date().toISOString(),
-    };
-    this.messages.push(newMessage);
+    const [newMessage] = await db
+      .insert(messages)
+      .values(message)
+      .returning();
     return newMessage;
   }
   
   async deleteMessage(id: number): Promise<boolean> {
-    const initialLength = this.messages.length;
-    this.messages = this.messages.filter(message => message.id !== id);
-    return initialLength > this.messages.length;
+    await db
+      .delete(messages)
+      .where(eq(messages.id, id));
+    return true;
   }
 }
 
-// Use memory storage instead of database
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
